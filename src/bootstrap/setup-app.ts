@@ -6,12 +6,12 @@ import {
   VersioningType,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppLogger } from '@shared/logging/logging.service';
 import { TransformInterceptor } from '@shared/interceptors/transform.interceptor';
 import { HttpExceptionFilter } from '@shared/filters/http-exception.filter';
 import { LoggingInterceptor } from '@shared/logging/logging.interceptor';
 import { Reflector } from '@nestjs/core';
+import { setupDocumentation } from './setup-documentation';
 
 /**
  * 设置应用级基础设施
@@ -19,19 +19,18 @@ import { Reflector } from '@nestjs/core';
  * - 校验管道：请求体验证与类型转换（ValidationPipe）
  * - 拦截器：日志（LoggingInterceptor）、统一响应（TransformInterceptor）
  * - 异常过滤器：统一错误结构（HttpExceptionFilter）
- * - Swagger：生成与挂载 OpenAPI 文档
+ * - API 文档：Scalar API Reference
  *
  * 参数：
  * - app: INestApplication —— Nest 应用实例
  */
-export function setupApp(app: INestApplication) {
+export async function setupApp(app: INestApplication) {
   const configService = app.get(ConfigService);
   const appLogger = app.get(AppLogger);
 
   app.useLogger(appLogger);
 
   const levelStr = configService.get<string>('LOG_LEVELS');
-  console.log('🚀 ~ setupApp ~ levelStr:', levelStr);
   if (levelStr) {
     const all: LogLevel[] = ['log', 'error', 'warn', 'debug', 'verbose'];
     const levels = levelStr
@@ -89,23 +88,6 @@ export function setupApp(app: INestApplication) {
   // HttpExceptionFilter: 全局异常过滤器，将所有 HttpException 格式化为标准错误 JSON
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  // 构建 Swagger 文档
-  const config = new DocumentBuilder()
-    // setTitle: 文档标题
-    .setTitle('NestJS API')
-    // setDescription: 文档描述
-    .setDescription('The API description')
-    // setVersion: API 版本号
-    .setVersion('1.0')
-    // build: 生成符合 OpenAPI 规范的配置对象
-    .build();
-
-  // SwaggerModule.createDocument: 根据应用实例和配置生成完整的 OpenAPI 文档对象
-  const document = SwaggerModule.createDocument(app, config);
-
-  // SwaggerModule.setup: 挂载 Swagger UI
-  // 'api/docs': 显式指定完整路径，避免受 setGlobalPrefix 影响导致路径混淆
-  // app: 应用实例
-  // document: 生成的文档对象
-  SwaggerModule.setup('api/docs', app, document);
+  // 配置 API 文档 (Scalar)
+  await setupDocumentation(app);
 }

@@ -20,7 +20,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ClsModule } from 'nestjs-cls';
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { LoggingModule } from '@shared/logging/logging.module';
 import { UsersModule } from '@modules/users/users.module';
 
@@ -92,6 +91,5 @@ import { UsersModule } from '@modules/users/users.module';
     UsersModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}

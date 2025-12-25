@@ -8,19 +8,9 @@
  * - 具体业务逻辑放在 Service 中
  */
 import { Controller, Get } from '@nestjs/common';
-import { AppService } from './app.service';
 
 @Controller()
 export class AppController {
-  // 通过依赖注入获取服务实例
-  constructor(private readonly appService: AppService) {}
-
-  @Get()
-  getHello(): string {
-    // 委托给服务层处理逻辑
-    return this.appService.getHello();
-  }
-
   @Get('health')
   health() {
     return { status: 'ok' };

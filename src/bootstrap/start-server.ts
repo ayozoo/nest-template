@@ -16,13 +16,16 @@ import { AppLogger } from '@shared/logging/logging.service';
  */
 export async function startServer() {
   const app = await NestFactory.create(AppModule);
-  setupApp(app);
+  await setupApp(app);
   const configService = app.get(ConfigService);
   const port = configService.get<number>('PORT') ?? 3000;
   await app.listen(port);
   const logger = app.get(AppLogger);
   logger.log(`Application is running on: http://localhost:${port}/api/v1`);
   logger.log(
-    `Swagger documentation is running on: http://localhost:${port}/api/docs`,
+    `Scalar API Reference is running on: http://localhost:${port}/api/reference`,
+  );
+  logger.log(
+    `Redoc documentation is running on: http://localhost:${port}/api/redoc`,
   );
 }

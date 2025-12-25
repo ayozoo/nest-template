@@ -17,7 +17,7 @@ export const ResponseMessage = (message: string, statusCode?: number) => {
     SetMetadata(RESPONSE_MESSAGE_METADATA, message)(
       target,
       key as string | symbol,
-      descriptor as any,
+      descriptor as TypedPropertyDescriptor<unknown>,
     );
     if (statusCode !== undefined) {
       SetMetadata(RESPONSE_CODE_METADATA, statusCode)(

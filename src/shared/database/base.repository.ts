@@ -1,10 +1,17 @@
-import { Repository, DeepPartial, FindOptionsWhere } from 'typeorm';
+import {
+  Repository,
+  DeepPartial,
+  FindOptionsWhere,
+  FindOneOptions,
+  FindOptionsRelations,
+} from 'typeorm';
 import { BaseEntity } from './base.entity';
 import {
   ConflictException,
   InternalServerErrorException,
 } from '@nestjs/common';
 import { IRepository } from '../interfaces/repository.interface';
+import { SmartRelations } from '../types/typeorm-utils';
 
 /**
  * 通用基础仓库
@@ -15,6 +22,28 @@ export abstract class BaseRepository<
   T extends BaseEntity,
 > implements IRepository<T> {
   protected constructor(protected readonly repository: Repository<T>) {}
+
+  /**
+   * 🚀 智能关联查询 (Prisma-like)
+   *
+   * 根据传入的 relations 对象，自动推导返回类型，将关联字段标记为必选。
+   * 解决了 TypeORM 默认关联查询丢失类型的问题。
+   *
+   * @example
+   * const user = await repo.findWithRelations({
+   *   where: { id: 1 },
+   *   relations: { posts: { comments: true } }
+   * });
+   * // user.posts[0].comments 将被 TypeScript 正确识别，无需判空
+   */
+  async findWithRelations<R extends FindOptionsRelations<T>>(
+    options: FindOneOptions<T> & { relations: R },
+  ): Promise<SmartRelations<T, R> | null> {
+    return (await this.repository.findOne(options)) as SmartRelations<
+      T,
+      R
+    > | null;
+  }
 
   /**
    * 创建实体

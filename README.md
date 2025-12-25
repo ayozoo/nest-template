@@ -1,98 +1,137 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# NestJS Enterprise Template (Advanced)
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+这是一个为大型应用设计的 NestJS 高级后端模板，集成了**仓储模式 (Repository Pattern)**、**智能类型推导 (Smart Relations)**、**结构化日志 (Structured Logging)** 以及**现代化 API 文档**。
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+旨在解决随着项目规模增长带来的代码耦合、类型丢失和维护困难问题。
 
-## Description
+## 🌟 核心特性
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+### 1. 极致的架构设计
 
-## Project setup
+- **Repository Pattern (仓储模式)**: 实现了真正的分层架构。Service 层不再依赖 TypeORM 的具体实现，而是依赖 `IRepository` 接口。
+- **Generic Repository (泛型仓储)**: 提供 `BaseRepository<T>`，内置常见 CRUD 操作，支持软删除、分页等扩展。
+- **Dependency Inversion (依赖倒置)**: 业务逻辑层与数据访问层彻底解耦，未来替换 ORM 或数据库引擎时，无需修改任何业务代码。
 
-```bash
-$ npm install
+### 2. 🚀 Smart Relations (智能关联推导)
+
+解决了 TypeORM 最大的痛点：**关联查询时的类型丢失**。
+本模板独创 `findWithRelations` 方法，利用 TypeScript 递归类型推导，实现了类似 Prisma 的开发体验。
+
+**对比：**
+
+❌ **传统 TypeORM:**
+
+```typescript
+const user = await repo.findOne({ where: { id }, relations: { posts: true } });
+//即使你查了 posts，TS 依然认为 user.posts 可能是 undefined
+if (user.posts) {
+  // 必须手动判空
+  console.log(user.posts[0].title);
+}
 ```
 
-## Compile and run the project
+✅ **Smart Relations (本项目):**
 
-```bash
-# development
-$ npm run start
+```typescript
+const user = await repo.findWithRelations({
+  where: { id },
+  relations: { posts: { comments: true } }, // 支持深层嵌套
+});
 
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+// ✨ TypeScript 自动推导：
+// 1. user.posts 是必选数组 (Array)
+// 2. user.posts[0].comments 也是必选数组
+console.log(user.posts[0].comments[0].content); // 直接访问，类型安全！
 ```
 
-## Run tests
+### 3. 🔍 全链路可观测性
+
+- **Structured Logging (结构化日志)**: 生产环境输出 JSON 格式，方便 ELK/Datadog 收集。
+- **Request Context Tracking**: 集成 `nestjs-cls`，自动为每个请求生成唯一的 `request_id`。无论日志在 Service 还是 Repository 打印，都能通过 `request_id` 串联整个调用链。
+- **Automatic Metadata**: 自动记录请求耗时、URL、Method、Status Code、User Agent。
+
+### 4. 📚 现代化 API 文档
+
+抛弃传统的 Swagger UI，集成两款次世代文档工具：
+
+- **Scalar API Reference**: `http://localhost:3000/api/reference`
+  - OpenAI 风格的文档界面
+  - 支持深色模式、多语言代码生成、交互式测试
+- **Redoc**: `http://localhost:3000/api/redoc`
+  - 适合复杂 API 结构展示
+  - 极佳的三栏布局阅读体验
+
+## 🛠️ 快速开始
+
+### 1. 环境准备
+
+- Node.js >= 18
+- PostgreSQL
+
+### 2. 安装依赖
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm install
 ```
 
-## Deployment
+### 3. 配置环境变量
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+复制 `.env.example` 到 `.env` (如果没有则新建):
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+```env
+# Database
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=postgres
+DB_DATABASE=nest_template
+
+# App
+PORT=3000
+NODE_ENV=development
+
+# Logging
+LOG_LEVEL=debug
+```
+
+### 4. 启动项目
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# 开发模式 (Watch Mode)
+npm run start:dev
+
+# 生产模式
+npm run start:prod
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## 📂 目录结构说明
 
-## Resources
+```
+src/
+├── bootstrap/           # 引导层：负责应用启动、全局配置、文档挂载
+│   ├── setup-app.ts     # 全局管道、拦截器、过滤器配置
+│   └── setup-documentation.ts # Scalar & Redoc 配置
+├── modules/             # 业务模块层
+│   └── users/
+│       ├── users.controller.ts # 处理 HTTP 请求
+│       ├── users.service.ts    # 纯业务逻辑 (不含 SQL)
+│       └── users.repository.ts # 数据访问的具体实现
+├── shared/              # 共享层 (核心架构代码)
+│   ├── database/        # 数据库基础设施 (BaseRepository, BaseEntity)
+│   ├── types/           # 高级类型工具 (SmartRelations)
+│   ├── logging/         # 日志模块
+│   └── interfaces/      # 核心接口定义
+└── main.ts              # 入口文件
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+## 🎯 开发指南
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+### 如何新增一个模块？
 
-## Support
+1. **定义 Entity**: 继承 `BaseEntity`。
+2. **定义 Repository 接口**: 继承 `IRepository<T>`。
+3. **实现 Repository**: 继承 `BaseRepository<T>` 并实现接口。
+4. **编写 Service**: 注入 Repository 接口（使用 `@InjectRepository` 或自定义 Token）。
+5. **编写 Controller**: 调用 Service。
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+这种方式虽然初期代码量稍多，但能保证项目在拥有上百个模块时依然保持清晰的边界和极高的可维护性。
